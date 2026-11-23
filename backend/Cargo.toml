@@ -1,0 +1,19 @@
+[package]
+name = "dbx-plugin-dbx-notes-plugin"
+version = "0.1.1"
+edition = "2021"
+license = "Apache-2.0"
+
+[workspace]
+
+[dependencies]
+dbx-plugin-sdk = { path = "vendor/dbx-plugin-sdk" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

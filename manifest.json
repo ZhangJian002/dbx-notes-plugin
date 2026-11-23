@@ -1,0 +1,391 @@
+{
+  "$schema": "https://raw.githubusercontent.com/t8y2/dbx/main/plugins/manifest.schema.json",
+  "manifest_version": 1,
+  "id": "io.github.zjay.notes",
+  "name": "DBX Notes",
+  "version": "0.1.1",
+  "publisher": "zjay",
+  "description": "Lightweight Notion-like notes with Markdown, page tree, search, tags, trash, WebDAV and Git sync.",
+  "icon": "assets/plugin.svg",
+  "permissions": [
+    "host.events"
+  ],
+  "engines": {
+    "dbx": ">=0.5.68",
+    "host_api": "1"
+  },
+  "entrypoints": {
+    "backend": {
+      "executable": "bin/dbx-plugin-dbx-notes-plugin"
+    },
+    "ui": {
+      "root": "ui",
+      "entry": "ui/index.html"
+    }
+  },
+  "contributions": [
+    {
+      "type": "connection-provider",
+      "id": "io.github.zjay.notes.connection",
+      "label": "DBX Notes",
+      "icon": "assets/plugin.svg",
+      "database_type": "dbx-notes",
+      "description": "A Markdown notes vault, optionally synced through WebDAV or Git.",
+      "fields": [
+        {
+          "key": "display_name",
+          "label": "Vault name",
+          "type": "text",
+          "default": "My notes",
+          "binding": "name",
+          "required": true
+        },
+        {
+          "key": "sync_mode",
+          "label": "Sync",
+          "type": "select",
+          "binding": "config",
+          "default": "none",
+          "options": [
+            {
+              "label": "Local only",
+              "value": "none"
+            },
+            {
+              "label": "WebDAV",
+              "value": "webdav"
+            },
+            {
+              "label": "Git",
+              "value": "git"
+            }
+          ],
+          "description": "Notes are always stored locally first. Sync adds a remote copy."
+        },
+        {
+          "key": "webdav_url",
+          "label": "WebDAV folder URL",
+          "type": "text",
+          "binding": "config",
+          "placeholder": "https://dav.example.com/remote.php/dav/files/me/DBXNotes",
+          "description": "The plugin stores vault.json and notes/*.md inside this folder.",
+          "visible_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "webdav"
+            ]
+          },
+          "required_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "webdav"
+            ]
+          }
+        },
+        {
+          "key": "webdav_username",
+          "label": "WebDAV username",
+          "type": "text",
+          "binding": "config",
+          "visible_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "webdav"
+            ]
+          }
+        },
+        {
+          "key": "webdav_password",
+          "label": "WebDAV password",
+          "type": "password",
+          "binding": "secret",
+          "visible_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "webdav"
+            ]
+          }
+        },
+        {
+          "key": "git_remote",
+          "label": "Git remote",
+          "type": "text",
+          "binding": "config",
+          "placeholder": "https://github.com/me/notes.git",
+          "description": "HTTPS or SSH. HTTPS token is used through a private askpass helper.",
+          "visible_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "git"
+            ]
+          },
+          "required_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "git"
+            ]
+          }
+        },
+        {
+          "key": "git_branch",
+          "label": "Branch",
+          "type": "text",
+          "binding": "config",
+          "default": "main",
+          "visible_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "git"
+            ]
+          }
+        },
+        {
+          "key": "git_username",
+          "label": "Git username",
+          "type": "text",
+          "binding": "config",
+          "default": "git",
+          "visible_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "git"
+            ]
+          }
+        },
+        {
+          "key": "git_token",
+          "label": "Git token / password",
+          "type": "password",
+          "binding": "secret",
+          "description": "A personal access token. Leave empty when using SSH with an agent.",
+          "visible_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "git"
+            ]
+          }
+        },
+        {
+          "key": "git_author_name",
+          "label": "Commit author",
+          "type": "text",
+          "binding": "config",
+          "default": "DBX Notes",
+          "visible_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "git"
+            ]
+          }
+        },
+        {
+          "key": "git_author_email",
+          "label": "Commit email",
+          "type": "text",
+          "binding": "config",
+          "default": "notes@dbx.local",
+          "visible_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "git"
+            ]
+          }
+        },
+        {
+          "key": "export_markdown",
+          "label": "Also upload readable Markdown files",
+          "type": "boolean",
+          "binding": "config",
+          "default": true,
+          "description": "Writes notes/<title>-<id>.md beside vault.json.",
+          "visible_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "webdav",
+              "git"
+            ]
+          }
+        },
+        {
+          "key": "auto_sync_minutes",
+          "label": "Auto sync interval (minutes)",
+          "type": "number",
+          "binding": "config",
+          "default": 5,
+          "description": "0 disables automatic sync while the notes tab is open.",
+          "visible_when": {
+            "field": "sync_mode",
+            "one_of": [
+              "webdav",
+              "git"
+            ]
+          }
+        },
+        {
+          "key": "connect_timeout_secs",
+          "label": "Network timeout (seconds)",
+          "type": "number",
+          "binding": "config",
+          "default": 30
+        }
+      ],
+      "workbench": "io.github.zjay.notes.workbench",
+      "capabilities": [
+        "test",
+        "connect",
+        "disconnect"
+      ]
+    },
+    {
+      "type": "workbench",
+      "id": "io.github.zjay.notes.workbench",
+      "label": "DBX Notes",
+      "description": "Write Markdown notes in a page tree and sync them with WebDAV or Git.",
+      "icon": "assets/plugin.svg"
+    }
+  ],
+  "localizations": {
+    "zh-CN": {
+      "name": "DBX Notes",
+      "description": "轻量 Notion 风格 Markdown 笔记：页面树、搜索、标签、回收站，支持 WebDAV 与 Git 同步。",
+      "contributions": {
+        "io.github.zjay.notes.connection": {
+          "label": "DBX Notes",
+          "description": "一个 Markdown 笔记库，可选 WebDAV 或 Git 同步。",
+          "fields": {
+            "display_name": {
+              "label": "笔记库名称"
+            },
+            "sync_mode": {
+              "label": "同步方式",
+              "description": "笔记总是先保存在本地，同步会额外保留一份远端副本。",
+              "options": {
+                "none": "仅本地",
+                "webdav": "WebDAV",
+                "git": "Git"
+              }
+            },
+            "webdav_url": {
+              "label": "WebDAV 目录地址",
+              "placeholder": "https://dav.example.com/remote.php/dav/files/me/DBXNotes",
+              "description": "插件会把 vault.json 和 notes/*.md 写入这个目录。"
+            },
+            "webdav_username": {
+              "label": "WebDAV 用户名"
+            },
+            "webdav_password": {
+              "label": "WebDAV 密码"
+            },
+            "git_remote": {
+              "label": "Git 仓库地址",
+              "placeholder": "https://github.com/me/notes.git",
+              "description": "支持 HTTPS 或 SSH。HTTPS 令牌通过私有 askpass 助手传入。"
+            },
+            "git_branch": {
+              "label": "分支"
+            },
+            "git_username": {
+              "label": "Git 用户名"
+            },
+            "git_token": {
+              "label": "Git 令牌 / 密码",
+              "description": "个人访问令牌。使用 SSH + agent 时可留空。"
+            },
+            "git_author_name": {
+              "label": "提交作者"
+            },
+            "git_author_email": {
+              "label": "提交邮箱"
+            },
+            "export_markdown": {
+              "label": "同时上传可读的 Markdown 文件",
+              "description": "在 vault.json 旁写入 notes/<标题>-<id>.md。"
+            },
+            "auto_sync_minutes": {
+              "label": "自动同步间隔（分钟）",
+              "description": "0 表示笔记标签页打开时不自动同步。"
+            },
+            "connect_timeout_secs": {
+              "label": "网络超时（秒）"
+            }
+          }
+        },
+        "io.github.zjay.notes.workbench": {
+          "label": "DBX Notes",
+          "description": "在页面树中书写 Markdown 笔记，并同步到 WebDAV 或 Git。"
+        }
+      }
+    },
+    "zh": {
+      "name": "DBX Notes",
+      "description": "轻量 Notion 风格 Markdown 笔记：页面树、搜索、标签、回收站，支持 WebDAV 与 Git 同步。",
+      "contributions": {
+        "io.github.zjay.notes.connection": {
+          "label": "DBX Notes",
+          "description": "一个 Markdown 笔记库，可选 WebDAV 或 Git 同步。",
+          "fields": {
+            "display_name": {
+              "label": "笔记库名称"
+            },
+            "sync_mode": {
+              "label": "同步方式",
+              "description": "笔记总是先保存在本地，同步会额外保留一份远端副本。",
+              "options": {
+                "none": "仅本地",
+                "webdav": "WebDAV",
+                "git": "Git"
+              }
+            },
+            "webdav_url": {
+              "label": "WebDAV 目录地址",
+              "placeholder": "https://dav.example.com/remote.php/dav/files/me/DBXNotes",
+              "description": "插件会把 vault.json 和 notes/*.md 写入这个目录。"
+            },
+            "webdav_username": {
+              "label": "WebDAV 用户名"
+            },
+            "webdav_password": {
+              "label": "WebDAV 密码"
+            },
+            "git_remote": {
+              "label": "Git 仓库地址",
+              "placeholder": "https://github.com/me/notes.git",
+              "description": "支持 HTTPS 或 SSH。HTTPS 令牌通过私有 askpass 助手传入。"
+            },
+            "git_branch": {
+              "label": "分支"
+            },
+            "git_username": {
+              "label": "Git 用户名"
+            },
+            "git_token": {
+              "label": "Git 令牌 / 密码",
+              "description": "个人访问令牌。使用 SSH + agent 时可留空。"
+            },
+            "git_author_name": {
+              "label": "提交作者"
+            },
+            "git_author_email": {
+              "label": "提交邮箱"
+            },
+            "export_markdown": {
+              "label": "同时上传可读的 Markdown 文件",
+              "description": "在 vault.json 旁写入 notes/<标题>-<id>.md。"
+            },
+            "auto_sync_minutes": {
+              "label": "自动同步间隔（分钟）",
+              "description": "0 表示笔记标签页打开时不自动同步。"
+            },
+            "connect_timeout_secs": {
+              "label": "网络超时（秒）"
+            }
+          }
+        },
+        "io.github.zjay.notes.workbench": {
+          "label": "DBX Notes",
+          "description": "在页面树中书写 Markdown 笔记，并同步到 WebDAV 或 Git。"
+        }
+      }
+    }
+  }
+}
