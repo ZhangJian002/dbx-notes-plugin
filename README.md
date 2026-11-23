@@ -2,11 +2,13 @@
 
 轻量、Notion 风格的 Markdown 笔记插件，可作为 DBX 的工作台使用，并支持把笔记库同步到 **WebDAV** 或 **Git**。
 
+## 功能
+
 - 页面树：无限层级子页面，支持折叠、拖拽排序、拖到其他页面下成为子页面；左侧栏可隐藏
 - 首页：内置完整 Markdown 样式演示，默认分栏；左侧可以随意编辑查看效果，但改动不会保存；不占用页面树、不能作为其他页面的父页面；通过侧栏顶部的房子图标打开
+- 标签页：首页和打开的笔记各自占一个标签，首页标签可关闭（通过侧栏房子图标重新打开）；标签栏可切换单行横向滚动 / 多行换行，打开的标签和顺序会记住
 - 子页面：当前页面的直接子页面以右下角小按钮显示，默认收起；点开后列出子页面，点击即可跳转
 - 编辑体验：普通页面是编辑与预览融合的所见即所得编辑器，输入 Markdown 标记立即变成对应元素；支持字体样式、列表、任务、引用、代码块、分隔线、表格、链接、图片和文件；格式操作统一在右键菜单；粘贴 Markdown 自动渲染，复制整块内容时剪贴板里是 Markdown；格式修改支持 Cmd+Z 撤销，表格增删行列也支持一次 Cmd+Z 回退
-- 标签页：首页和打开的笔记各自占一个标签，首页标签可关闭（通过侧栏房子图标重新打开）；标签栏可切换单行横向滚动 / 多行换行，打开的标签和顺序会记住
 - 整理：收藏（实心星标）、标签、全文搜索、回收站（整棵子树一起删除 / 恢复）
 - 页面图标：内置 Notion 风格 emoji 选择器
 - 图片 / 文件：编辑器内粘贴图片、拖入文件，或用工具栏“添加附件”；图片直接预览，文件可点击下载
@@ -15,85 +17,9 @@
 - 跨平台：macOS（Apple Silicon / Intel）、Windows x64、Linux x64 / arm64
 - 界面文字跟随 DBX 的语言设置（中文 / English），并跟随 DBX 主题（浅色、深色）
 
-## 环境要求
-
-- DBX >= 0.5.68
-- 构建时需要 Rust 1.85+；Git 同步使用系统 `git` 命令
-- Windows 需要安装 Git for Windows（并确保 `git.exe` 在 PATH 中）
-- 打包 CLI：`npm install --global @dbx-app/plugin-cli`（需要 Node.js >= 18.18）
-
-## 构建与安装
-
-插件包含 Rust sidecar，因此**每个平台需要各自的原生产物**。在 5 个原生 runner 上分别执行 `dbx-plugin package .`：
-
-| 目标 | 平台 |
-| --- | --- |
-| `darwin-arm64` | macOS Apple Silicon |
-| `darwin-x64` | macOS Intel |
-| `windows-x64` | Windows 10/11 x64 |
-| `linux-x64` | Linux x64（glibc 2.34+） |
-| `linux-arm64` | Linux arm64（glibc 2.34+） |
-
-在目标机器上构建：
-
-```bash
-cd dbx-notes-plugin
-dbx-plugin package .
-```
-
-产物在 `dist/`：
-
-```text
-dist/io.github.zjay.notes-0.1.1-darwin-arm64.dbxp
-dist/io.github.zjay.notes-0.1.1-darwin-x64.dbxp
-dist/io.github.zjay.notes-0.1.1-windows-x64.dbxp
-dist/io.github.zjay.notes-0.1.1-linux-x64.dbxp
-dist/io.github.zjay.notes-0.1.1-linux-arm64.dbxp
-dist/*.artifact.json
-dist/SHA256SUMS
-```
-
-推送 GitHub Release 后，`.github/workflows/release.yml` 会调用 DBX 官方 reusable workflow，按上面的矩阵自动生成全部候选包。
-
-如果已经用 Docker / 交叉工具链构建好了某个目标的二进制，可以用 `scripts/package-target.py` 打包（`dbx-plugin package` 会拒绝非当前宿主目标）：
-
-```bash
-DBX_PACKAGER=/path/to/dbx-plugin-packager \
-  python3 scripts/package-target.py \
-  --target linux-x64 \
-  --binary backend/target-linux-x64/release/dbx-plugin-dbx-notes-plugin
-```
-
-`.dbxp` 是未签名的开发候选包。在 DBX 的插件中心打开“开发安装”开关后选择对应平台的该文件安装；正式分发需要由 DBX Store 仓库密钥签名。
-
-### 安装时报 “must have a trusted Ed25519 signature”
-
-这是 DBX 的正常校验，不是安装包损坏。`dbx-plugin package` 生成的是**未签名开发包**，只允许通过开发开关安装：
-
-1. 打开 DBX 顶部工具栏的“插件中心”。
-2. 切换到“设置”。
-3. 展开“第三方与开发者选项”。
-4. 开启“允许安装未签名开发包”。
-5. 回到“已安装”/设置页，点击“安装 `.dbxp`”，选择 `dist/` 中的文件。
-
-安装完成后建议关闭该开关。它只影响手动本地安装，不会放宽官方插件商店的签名校验。
-
-如果要分发给其他人、又不想让对方开开发开关，只能：
-
-- 上架官方商店：向 `t8y2/dbx-store` 提交未签名候选包，由 DBX Store 用官方仓库密钥签名；或
-- 自建私有插件仓库：用 `dbx-plugin keygen` 生成仓库密钥，签名候选包，并把公钥分发给你仓库的用户，让他们在插件中心的高级信任设置中加入该公钥。直接用自定义密钥签一个裸 `.dbxp` 仍然不会被信任，因为 DBX 没有该公钥。
-
-本地开发（不安装到 DBX，直接在浏览器中调试 UI 与 sidecar）：
-
-```bash
-dbx-plugin dev --path . --port 5190
-```
-
 ## 界面语言
 
 工作台读取 `window.dbxPlugin.locale`，中文（`zh`、`zh-CN`、`zh-TW` 等）显示简体中文，其余语言显示英文；在 DBX 中切换语言时，已打开的笔记标签页会立即刷新，无需重新打开。连接表单的字段名、选项和说明由 `manifest.json > localizations` 提供，同样跟随 DBX 语言。
-
-新增语言时，在 `ui/index.html` 的 `STRINGS` 中加入对应 locale，并在 `manifest.json > localizations` 中补一份字段翻译即可。
 
 ## 编辑与 Markdown
 
@@ -119,11 +45,11 @@ dbx-plugin dev --path . --port 5190
 
 列表项内按 `Tab` / `Shift+Tab` 缩进或反缩进；空列表项按回车退出列表。粘贴 Markdown 会直接渲染成元素。
 
-【首页】是纯源码 + 预览的样式演示，编辑内容不保存。
+首页是纯源码 + 预览的样式演示，编辑内容不保存。
 
-## 在工作台内修改同步设置
+## 同步设置
 
-不用每次回插件中心：工作台右上角齿轮打开“同步设置”，可以直接切换：
+工作台右上角齿轮打开“同步设置”，可以直接切换：
 
 - 仅本地 / WebDAV / Git；
 - WebDAV 地址、用户名、密码；
@@ -134,15 +60,16 @@ dbx-plugin dev --path . --port 5190
 
 > 这是本机覆盖配置，不会自动同步到其他设备；每台设备可以单独设置。
 
-## 创建笔记库连接
+## 笔记库连接
 
-1. 打开 DBX 插件中心 → “已安装” → DBX Notes。
-2. 新建连接，填写“笔记库名称”。
-3. 选择同步方式：
+在 DBX 插件中心新建 Notes 连接：
+
+1. 填写“笔记库名称”。
+2. 选择同步方式：
    - **仅本地**：只保存在 `DBX_PLUGIN_DATA_DIR` 下，不同步。
    - **WebDAV**：填写目录 URL、用户名、密码。
    - **Git**：填写仓库地址、分支、用户名、令牌。
-4. 保存后从该连接打开工作台。
+3. 保存后从该连接打开工作台。
 
 笔记库配置保存在 DBX 连接中；密码 / 令牌写入 DBX Secret Store，插件前端和 `vault.json` 都看不到它们。
 
@@ -239,30 +166,3 @@ ssh://git@example.com:2222/notes.git
 - WebDAV / Git 凭据只存在于 DBX Secret Store 与 sidecar 内存中；同步状态和日志不会记录密码或令牌。
 - Git 同步依赖系统 `git`。若在无 `git` 的环境中使用，请选择 WebDAV 或仅本地模式。
 - 冲突副本不会自动合并正文；需要时手动对比 `标题` 与 `标题 (conflict)`。
-
-## 目录结构
-
-```text
-dbx-notes-plugin/
-├── manifest.json              # 插件清单、连接字段、工作台贡献点、中文本地化
-├── dbx-plugin.toml            # 打包配置
-├── assets/plugin.svg
-├── backend/
-│   ├── Cargo.toml
-│   ├── src/main.rs            # sidecar：笔记库、合并、WebDAV、Git
-│   ├── src/merge.rs           # 合并决策表与单测
-│   └── vendor/dbx-plugin-sdk/ # 内置 SDK（crates.io 未发布）
-├── scripts/package-target.py  # 为交叉编译好的二进制打包
-├── .github/workflows/release.yml  # 5 平台原生构建矩阵
-├── ui/index.html              # 单文件工作台 UI
-├── ui/markdown.js             # markdown-it 适配层
-└── ui/vendor/markdown-it.min.js
-```
-
-## 发布
-
-1. 推送 tag 并发布 GitHub Release；生成的 workflow 会为各平台构建未签名候选包。
-2. 若仓库在 DBX Store 注册了 `autoUpdate: true`，会自动创建候选 PR；否则手动向 `t8y2/dbx-store:main` 提交候选。
-3. 审核通过后由 DBX Store 使用官方仓库密钥签名并更新同一 PR。
-
-源码与未签名候选包保留在本仓库；用户从官方目录安装签名后的资产。
